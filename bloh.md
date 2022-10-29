@@ -1,5 +1,6 @@
 # Forecast the future in a timeseries data with Deep Java Library (DJL)
 ## -- Demonstration on M5forecasting and airpassenger datasests
+Junyuan Zhang, Kexin Feng
 
 ![img](https://cdn-images-1.medium.com/max/1000/1*vfVcF-ZaC_WbTt_LWlXH0w.png)
 
