@@ -2,7 +2,7 @@
 ## -- Demonstration on M5forecasting and airpassenger datasests
 Junyuan Zhang, Kexin Feng
 
-<img src="https://cdn-images-1.medium.com/max/1000/1*vfVcF-ZaC_WbTt_LWlXH0w.png" width="400" />
+<img src="https://cdn-images-1.medium.com/max/1000/1*vfVcF-ZaC_WbTt_LWlXH0w.png" width="800" />
 
 Time series data are commonly seen in the world. They can contain valued information that helps forecast for the future, monitor the status of a procedure and feedforward a control. Generic applications includes the following: sales forecasting, stock market analysis, yield projections, process and quality control, and many many more. See [link1](https://www.itl.nist.gov/div898/handbook/pmc/section4/pmc41.htm) and [link2](https://www.influxdata.com/time-series-forecasting-methods/#:~:text=Time%20series%20forecasting%20means%20to,on%20what%20has%20already%20happened).
 
@@ -253,7 +253,7 @@ logger.info("0.5-quantile(Median) of the prediction windows:\n" + forecast.quant
 
 We visualize the forecast result with mean, prediction intervals, etc. The plot function is in a python script [plot.py](https://gist.github.com/Carkham/a5162c9298bc51fec648a458a3437008).
 
-<img src="https://cdn-images-1.medium.com/max/1000/1*S9FRh3BRpymqeqA3ndV_MA.png" width="400" />
+<img src="https://cdn-images-1.medium.com/max/1000/1*S9FRh3BRpymqeqA3ndV_MA.png" width="800" />
 
 ### Metrics
 
@@ -439,7 +439,7 @@ In this section, we show the forecasting performance of DeepAR model on the [air
 
 The result is shown in the graph below. It has the same performance as shown in [gluonTS website](https://ts.gluon.ai/stable/index.html).
 
-<img src="https://user-images.githubusercontent.com/60054018/193000269-0b73c95b-5088-405c-aa95-f121d384ff08.png" width="400" />
+<img src="https://user-images.githubusercontent.com/60054018/193000269-0b73c95b-5088-405c-aa95-f121d384ff08.png" width="800" />
 
 
 The code is parallel to the inference with M5 forecasting data, which will not be repeated here. The source code is [here](https://github.com/deepjavalibrary/djl/blob/master/examples/src/main/java/ai/djl/examples/inference/timeseries/AirPassengersDeepAR.java).
