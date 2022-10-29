@@ -9,7 +9,12 @@ Time series data are commonly seen in the world. They can contain valued informa
 In this blog, we will introduce the timeseries package of DJL. This package contains the following two major features. First, it integrates DJL with [gluonTS](https://ts.gluon.ai/stable/index.html), a powerful timeseries python package. With this feature, the  models pretrained in gluonTS can be directly loaded into DJL for inference and deployment in Java environment.
 Second, it contains training features, so that users can directly build and modify timeseries deep learning models in DJL within Java envinronment. In the following, we will demonstrate these features with [M5 Forecasting](https://www.kaggle.com/c/m5-forecasting-accuracy) data. We will also use the [airpassenger](https://ts.gluon.ai/stable/index.html) data to benchmark the pretrained model loaded from gluonTS.
 
-The blog is structured as follows. We first introduce the dataset, the task and the DeepAR model. Then we show the inference feature which shows how to load pretrained model from gluonTS and do inference. Finally, we show the training feature, which demonstrate how to build and train a model in DJL.
+The blog is structured as follows. 
+- M5 Forecasting dataset and task
+- DeepAR model
+- Inference feature: inference with pretrained DeepAR model. 
+- Training feature: build and train your own DeepAR model
+- Summary
 
 ## M5 Forecasting dataset and task
 
@@ -28,7 +33,7 @@ Unlike traditional time series forecasting models, DeepAR estimates the future p
 
 Therefore, we choose the sales data set in the real scene as an example to describe how to use the timeseries package for forecasting.
 
-## Inference with gluonTS pretrained DeepAR model
+## Inference feature: inference with pretrained DeepAR model
 
 ### Setup
 
@@ -279,7 +284,7 @@ As you can see, in the result metric above, the model has `RMSSE = 1.00`. This m
 Click [here](https://github.com/deepjavalibrary/djl/blob/master/examples/src/main/java/ai/djl/examples/inference/timeseries/M5ForecastingDeepAR.java) to see the **source code** of the inference feature.
 
 
-## Build and train your own DeepAR model
+## Training feature: build and train your own DeepAR model
 
 In this section we will take you through the creation and training of our time series model — DeepAR.
 
@@ -386,7 +391,7 @@ DefaultTrainingConfig setupTrainingConfig(
 }
 ```
 
-### Train your model
+### Model training
 
 Now you can start training.
 
