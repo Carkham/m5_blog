@@ -2,7 +2,7 @@
 ## -- Demonstration on M5forecasting and airpassenger datasests
 Junyuan Zhang, Kexin Feng
 
-<img src="https://cdn-images-1.medium.com/max/1000/1*vfVcF-ZaC_WbTt_LWlXH0w.png" width="800" />
+<img src="https://cdn-images-1.medium.com/max/1000/1*vfVcF-ZaC_WbTt_LWlXH0w.png" width="600" />
 
 Time series data are commonly seen in the world. They can contain valued information that helps forecast for the future, monitor the status of a procedure and feedforward a control. Generic applications includes the following: sales forecasting, stock market analysis, yield projections, process and quality control, and many many more. See [link1](https://www.itl.nist.gov/div898/handbook/pmc/section4/pmc41.htm) and [link2](https://www.influxdata.com/time-series-forecasting-methods/#:~:text=Time%20series%20forecasting%20means%20to,on%20what%20has%20already%20happened).
 
@@ -173,11 +173,9 @@ M5Dataset dataset = M5Dataset.builder().setManager(manager).setRoot(m5ForecastFi
 
 ### Configure your translator
 
-The inference workflow is combined with input preprocessing, model forward, and output post-processing. DJL encapsulates input and output processing into the translator and uses Predictor to do the model forward.*
+The inference workflow consists of input pre-processing, model forward, and output post-processing. DJL encapsulates input and output processing into the translator, and uses `Predictor` to do the model forward.
 
-`DeepARTranslator` provides support for data preprocessing and postprocessing for probabilistic prediction models. Referring to GluonTS, our translator can perform corresponding preprocessing on `TimeseriesData` containing data according to different parameters to obtain the input of the network model. And post-processing the output of the network to get the prediction result.
-
-For DeepAR models, you must set the following arguments.
+`DeepARTranslator` provides support for data preprocessing and postprocessing for probabilistic prediction models. Similar to GluonTS, this translator is specifically designed for the `timeseriesData`, which fetches the data according to different parameters, like frequency. So you must configure this translator first as shown below.
 
 ```java
 Logger logger = LoggerFactory.getLogger(TimeSeriesDemo.class);
@@ -213,7 +211,7 @@ Criteria<TimeSeriesData, Forecast> criteria =
                 .build();
 ```
 
-### Inference
+### Prediction
 
 Now, you are ready to use the model bundled with the translator created above to run inference.
 
@@ -279,7 +277,10 @@ We use the following metrics to evaluate the performance of the DeepAR model in 
 
 Here, we focus on the metric *Root Mean Squared Scaled Error*, ie. [RMSSE](https://www.kaggle.com/competitions/m5-forecasting-accuracy/overview/evaluation). The detailed formula is in [here](https://mofc.unic.ac.cy/wp-content/uploads/2020/03/). It is different from the Root-mean-square error [RMSE](https://en.wikipedia.org/wiki/Root-mean-square_deviation) in that RMSSE is based on the variation between two contiguous data points. So this metric is scale invariant.
 
-As you can see, in the result metric above, the model has `RMSSE = 1.00`. This means that, on average, the error between the predition and the actual data is around `1.00` time the average variation. This is also seen in the result graph above: the prediction intervals are about the same scale as how much the data varies through time. This shows that the model is working; the deepAR model running in python also has the similar metric of RMSSE = 1.00. Other kaggle [learderboard models](https://www.kaggle.com/competitions/m5-forecasting-accuracy/leaderboard) can reach RMSSE = 0.5.
+As you can see, in the result metric above, the model has `RMSSE = 1.00`. This means that, on average, the error 
+between the prediction and the actual data is around `1.00` time the average variation of the timeseries. This is also 
+seen in the 
+result graph above: the prediction intervals are about the same scale as how much the data varies through time. This shows that the model is working; the deepAR model running in python also has the similar metric of RMSSE = 1.00. Other kaggle [learderboard models](https://www.kaggle.com/competitions/m5-forecasting-accuracy/leaderboard) can reach RMSSE = 0.5.
 
 Click [here](https://github.com/deepjavalibrary/djl/blob/master/examples/src/main/java/ai/djl/examples/inference/timeseries/M5ForecastingDeepAR.java) to see the **source code** of the inference feature.
 
