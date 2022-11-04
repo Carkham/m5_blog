@@ -117,8 +117,16 @@ try (ZooModel<TimeSeriesData, Forecast> model = criteria.loadModel();
     input.setStartTime(startTime);  // start time of prediction
     input.setField(FieldName.TARGET, array);  // target value through whole context length
     Forecast forecast = predictor.predict(input);
-    // save result and plot it with python.
-    
+
+    // save data for plotting
+    NDArray target = input.get(FieldName.TARGET);
+    target.setName("target");
+    saveNDArray(target);
+
+    // Save data for plotting. 
+    NDArray samples = ((SampleForecast) forecast).getSortedSamples();
+    samples.setName("samples");
+    saveNDArray(samples);
 }
 ```
 
