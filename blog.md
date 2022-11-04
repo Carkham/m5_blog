@@ -60,156 +60,47 @@ dependencies {
 
 In order to realize the preprocessing of time series data, we define the `TimeSeriesData` as the input of the Translator, which is used to store the feature fields and perform corresponding transformations.
 
-So for your own dataset, you need to customize the way you get the data and put it into `TimeSeriesData` as the input to the translator.
-
-For M5 dataset we have:
-
-```java
-class M5Dataset implements Iterable<NDList>, Iterator<NDList> {
-      
-    // coarse-grained data
-    private static String fileName = "weekly_sales_train_evaluation.csv";
-
-    private NDManager manager;
-    private List<Feature> target;
-    private List<CSVRecord> csvRecords;
-    private long size;
-    private long current;
-
-    M5Dataset(Builder builder) {
-        manager = builder.manager;
-        target = builder.target;
-        prepare(builder);
-        size = csvRecords.size();
-    }
-
-    /** Load data into CSVRecords */
-    private void prepare(Builder builder) throws IOException {
-        // csvUrl represents the url path to your local data
-        URL csvUrl = builder.root.resolve(fileName).toUri().toURL();
-        Reader reader = new InputStreamReader(
-            new BufferedInputStream(csvUrl.openStream()), StandardCharsets.UTF_8);
-        CSVParser csvParser = new CSVParser(reader, builder.csvFormat);
-        csvRecords = csvParser.getRecords();
-    }
-
-    @Override
-    public boolean hasNext() {
-        return current < size;
-    }
-
-    @Override
-    public NDList next() {
-        NDList data = getRowFeatures(manager, current, target);
-        current++;
-        return data;
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    /** Get string data of selected cell from index row in CSV file and create NDArray to save  */
-    private NDList getRowFeatures(NDManager manager, long index, List<Feature> selected) {
-        DynamicBuffer bb = new DynamicBuffer();
-        // Feature is the djl classs used to convert strings into their corresponding data
-        for (Feature feature : selected) {
-            String name = feature.getName();
-            String value = getCell(index, name);
-            feature.getFeaturizer().featurize(bb, value);
-        }
-        FloatBuffer buf = bb.getBuffer();
-        return new NDList(manager.create(buf, new Shape(bb.getLength())));
-    }
-
-    private String getCell(long rowIndex, String featureName) {
-        CSVRecord record = csvRecords.get(Math.toIntExact(rowIndex));
-        return record.get(featureName);
-    }
-
-    @Override
-    public Iterator<NDList> iterator() {
-        return this;
-    }
-
-    public static final class Builder {
-
-        NDManager manager;
-        List<Feature> target;
-        CSVFormat csvFormat;
-        Path root;
-
-        Builder(Path root, NDManager manager) {
-            this.root = root;
-            this.manager = manager;
-            csvFormat =
-                CSVFormat.DEFAULT
-                .builder()
-                .setHeader()
-                .setSkipHeaderRecord(true)
-                .setIgnoreHeaderCase(true)
-                .setTrim(true)
-                .build();
-            target = new ArrayList<>();
-            for (int i = 1; i <= 277; i++) {
-                target.add(new Feature("w_" + i, true));
-            }
-        }
-
-        public M5Dataset build() {
-            return new M5Dataset(this);
-        }
-    }
-}
-```
+So for your own dataset, you need to customize the way you get the data and put it into `TimeSeriesData` as the input to the translator. In this demo, we use `M5Dataset` which is located in `M5ForecastingDeepAR.java`. 
 
 ### Set your own dataset path.
 
 ```java
-Path m5ForecastFile = Paths.get("/YOUR PATH/m5-forecasting-accuracy");
+Repository repository = Repository.newInstance("local_dataset",
+    Paths.get("YOUR_PATH/m5-forecasting-accuracy"));
 NDManager manager = NDManager.newBaseManager();
-M5Dataset dataset = M5Dataset.builder().setManager(manager).setRoot(m5ForecastFile).build();
+M5Dataset dataset = M5Dataset.builder().setManager(manager).optRepository(repository).build();
 ```
 
-### Configure your translator
+### Configure your translator and load the local model
 
 The inference workflow consists of input pre-processing, model forward, and output post-processing. DJL encapsulates input and output processing into the translator, and uses `Predictor` to do the model forward.
 
 `DeepARTranslator` provides support for data preprocessing and postprocessing for probabilistic prediction models. Similar to GluonTS, this translator is specifically designed for the `timeseriesData`, which fetches the data according to different parameters, like frequency. So you must configure this translator first as shown below.
 
+**Note**: Here the arguments `predictionLength` and `freq` decide the structure of the model. So for a specific model, these two arguments cannot be changed, such that the translator is able to be compatible with the models in terms of the tensor shapes.
+
+Here, the `Criteria` API is used as search criteria to look for a ZooModel. In this application, you can customize your local pretrained model path: `/YOUR PATH/deepar.zip` .
+
 ```java
-Logger logger = LoggerFactory.getLogger(TimeSeriesDemo.class);
-String freq = "W";
+String modelUrl = "YOUR_PATH/deepar.zip";
 int predictionLength = 4;
-LocalDateTime startTime = LocalDateTime.parse("2011-01-29T00:00");
-
-Map<String, Object> arguments = new ConcurrentHashMap<>();
-
-arguments.put("prediction_length", predictionLength);
-arguments.put("freq", freq); // The predicted frequency contains units and values
-
-// Parameters from DeepAR in GluonTS
-arguments.put("use_" + FieldName.FEAT_DYNAMIC_REAL.name().toLowerCase(), false); 
-arguments.put("use_" + FieldName.FEAT_STATIC_CAT.name().toLowerCase(), false);
-arguments.put("use_" + FieldName.FEAT_STATIC_REAL.name().toLowerCase(), false);
+Criteria<TimeSeriesData, Forecast> criteria =
+        Criteria.builder()
+                .setTypes(TimeSeriesData.class, Forecast.class)
+                .optModelUrls(modelUrl)
+                .optEngine("MXNet")
+                .optTranslatorFactory(new DeferredTranslatorFactory())
+                .optArgument("prediction_length", predictionLength)
+                .optArgument("freq", "W")
+                .optArgument("use_feat_dynamic_real", "false")
+                .optArgument("use_feat_static_cat", "false")
+                .optArgument("use_feat_static_real", "false")
+                .optProgress(new ProgressBar())
+                .build();
 ```
 
 For any other GluonTS model, you can quickly develop your own translator using the classes in `transform` modules (etc. `TransformerTranslator`).
 
-### Load your own model from the local file system
-
-At this step, you need to construct the `Criteria` API, which is used as search criteria to look for a ZooModel. In this application, you can customize your local pretrained model path (local directory or an archive file containing .`params` and `symbol.json`.) with .`optModelPath()`. The following code snippet loads the model with the file path: `/YOUR PATH/deepar.zip` .
-
-```java
-DeepARTranslator translator = DeepARTranslator.builder(arguments).build();
-Criteria<TimeSeriesData, Forecast> criteria =
-        Criteria.builder()
-                .setTypes(TimeSeriesData.class, Forecast.class)
-                .optModelPath(Paths.get("/YOUR PATH/deepar.zip"}))
-                .optTranslator(translator)
-                .optProgress(new ProgressBar())
-                .build();
-```
 
 ### Prediction
 
@@ -217,17 +108,17 @@ Now, you are ready to use the model bundled with the translator created above to
 
 Since we need to generate features based on dates and make predictions with reference to the context, for each `TimeSeriesData` you must set the values of its `**StartTime**` and `**TARGET**` fields.
 
-```
+```java
 try (ZooModel<TimeSeriesData, Forecast> model = criteria.loadModel();
              Predictor<TimeSeriesData, Forecast> predictor = model.newPredictor()) {
     data = dataset.next();
     NDArray array = data.singletonOrThrow();
     TimeSeriesData input = new TimeSeriesData(10);
-    input.setStartTime(startTime); // start time of prediction
-    input.setField(FieldName.TARGET, array); // target value through whole context length
+    input.setStartTime(startTime);  // start time of prediction
+    input.setField(FieldName.TARGET, array);  // target value through whole context length
     Forecast forecast = predictor.predict(input);
-    saveResult(forecast); // save result and plot it with python.
-    }
+    // save result and plot it with python.
+    
 }
 ```
 
