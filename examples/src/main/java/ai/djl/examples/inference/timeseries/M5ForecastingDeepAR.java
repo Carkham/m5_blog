@@ -23,6 +23,7 @@ import ai.djl.ndarray.NDArray;
 import ai.djl.ndarray.NDArrays;
 import ai.djl.ndarray.NDList;
 import ai.djl.ndarray.NDManager;
+import ai.djl.ndarray.types.DataType;
 import ai.djl.ndarray.types.Shape;
 import ai.djl.repository.Artifact;
 import ai.djl.repository.MRL;
@@ -33,6 +34,7 @@ import ai.djl.timeseries.Forecast;
 import ai.djl.timeseries.SampleForecast;
 import ai.djl.timeseries.TimeSeriesData;
 import ai.djl.timeseries.dataset.FieldName;
+import ai.djl.training.loss.Loss;
 import ai.djl.training.util.ProgressBar;
 import ai.djl.translate.DeferredTranslatorFactory;
 import ai.djl.translate.TranslateException;
@@ -86,9 +88,10 @@ public final class M5ForecastingDeepAR {
         // Then add the setting `.optRepository(repository)` to the builder below
         M5Dataset dataset = M5Dataset.builder().setManager(manager).build();
 
-        // The modelUrl can be replaced by local model path. E.g.,
-        // String modelUrl = "rootPath/deepar.zip";
+        // Note that, for a model exported from MXNel, the tensor shape of the `begin_state` may be problematic, as indicated in this [issue](https://github.com/deepjavalibrary/djl/issues/2106#issuecomment-1295703321). As described there, you need to "change every begin_state's shape to (-1, 40)".
         String modelUrl = "djl://ai.djl.mxnet/deepar/0.0.1/m5forecast";
+        // To use a load a local model, do:
+        // String modelUrl = "rootPath/deepar.zip";
         int predictionLength = 4;
         Criteria<TimeSeriesData, Forecast> criteria =
                 Criteria.builder()
@@ -319,15 +322,10 @@ public final class M5ForecastingDeepAR {
 
             for (float quantile : quantiles) {
                 NDArray forecastQuantile = forecast.quantile(quantile);
-
-                NDArray quantileLoss =
-                        forecastQuantile
-                                .sub(gtTarget)
-                                .mul(gtTarget.lte(forecastQuantile).sub(quantile))
-                                .abs()
-                                .sum()
-                                .mul(2);
-                NDArray quantileCoverage = gtTarget.lt(forecastQuantile).mean();
+                NDArray quantileLoss = Loss.quantileL1Loss(quantile)
+                        .evaluate(new NDList(gtTarget), new NDList(forecastQuantile));
+                NDArray quantileCoverage = gtTarget.lt(forecastQuantile)
+                        .toType(DataType.FLOAT32, false).mean();
                 retMetrics.put(
                         String.format("QuantileLoss[%.2f]", quantile), quantileLoss.getFloat());
                 retMetrics.put(
