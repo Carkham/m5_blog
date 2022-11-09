@@ -77,7 +77,7 @@ The inference workflow consists of input pre-processing, model forward, and outp
 
 `DeepARTranslator` provides support for data preprocessing and postprocessing for probabilistic prediction models. Similar to GluonTS, this translator is specifically designed for the `timeseriesData`, which fetches the data according to different parameters, like frequency. So you must configure this translator first as shown below.
 
-**Note**: Here the arguments `predictionLength` and `freq` decide the structure of the model. So for a specific model, these two arguments cannot be changed, such that the translator is able to be compatible with the models in terms of the tensor shapes.
+**Note**: Here the arguments `predictionLength` and `freq` decide the structure of the model. So for a specific model, these two arguments cannot be changed, such that the translator is compatible with the models in terms of the tensor shapes. Also note that, for a model exported from MXNel, the tensor shape of the `begin_state` may be problematic, as indicated in this [issue](https://github.com/deepjavalibrary/djl/issues/2106#issuecomment-1295703321). As described there, you need to "change every begin_state's shape to (-1, 40)". Otherwise the model would not allow batch data processing.
 
 Here, the `Criteria` API is used as search criteria to look for a ZooModel. In this application, you can customize your local pretrained model path: `/YOUR PATH/deepar.zip` .
 
