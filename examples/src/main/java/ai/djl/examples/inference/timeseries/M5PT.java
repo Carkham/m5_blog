@@ -35,10 +35,8 @@ import ai.djl.timeseries.SampleForecast;
 import ai.djl.timeseries.TimeSeriesData;
 import ai.djl.timeseries.dataset.FieldName;
 import ai.djl.timeseries.translator.DeepARTranslator;
-import ai.djl.training.evaluator.Coverage;
 import ai.djl.training.loss.Loss;
 import ai.djl.training.util.ProgressBar;
-import ai.djl.translate.DeferredTranslatorFactory;
 import ai.djl.translate.TranslateException;
 import ai.djl.util.Progress;
 
@@ -65,7 +63,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class M5PT {
@@ -330,10 +327,11 @@ public final class M5PT {
 
             for (float quantile : quantiles) {
                 NDArray forecastQuantile = forecast.quantile(quantile);
-                NDArray quantileLoss = Loss.quantileL1Loss(quantile)
-                        .evaluate(new NDList(gtTarget), new NDList(forecastQuantile));
-                NDArray quantileCoverage = gtTarget.lt(forecastQuantile)
-                        .toType(DataType.FLOAT32, false).mean();
+                NDArray quantileLoss =
+                        Loss.quantileL1Loss(quantile)
+                                .evaluate(new NDList(gtTarget), new NDList(forecastQuantile));
+                NDArray quantileCoverage =
+                        gtTarget.lt(forecastQuantile).toType(DataType.FLOAT32, false).mean();
                 retMetrics.put(
                         String.format("QuantileLoss[%.2f]", quantile), quantileLoss.getFloat());
                 retMetrics.put(

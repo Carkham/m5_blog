@@ -88,7 +88,10 @@ public final class M5ForecastingDeepAR {
         // Then add the setting `.optRepository(repository)` to the builder below
         M5Dataset dataset = M5Dataset.builder().setManager(manager).build();
 
-        // Note that, for a model exported from MXNel, the tensor shape of the `begin_state` may be problematic, as indicated in this [issue](https://github.com/deepjavalibrary/djl/issues/2106#issuecomment-1295703321). As described there, you need to "change every begin_state's shape to (-1, 40)".
+        // Note that, for a model exported from MXNel, the tensor shape of the `begin_state` may be
+        // problematic, as indicated in this
+        // [issue](https://github.com/deepjavalibrary/djl/issues/2106#issuecomment-1295703321). As
+        // described there, you need to "change every begin_state's shape to (-1, 40)".
         String modelUrl = "djl://ai.djl.mxnet/deepar/0.0.1/m5forecast";
         // To use a load a local model, do:
         // String modelUrl = "rootPath/deepar.zip";
@@ -322,10 +325,11 @@ public final class M5ForecastingDeepAR {
 
             for (float quantile : quantiles) {
                 NDArray forecastQuantile = forecast.quantile(quantile);
-                NDArray quantileLoss = Loss.quantileL1Loss(quantile)
-                        .evaluate(new NDList(gtTarget), new NDList(forecastQuantile));
-                NDArray quantileCoverage = gtTarget.lt(forecastQuantile)
-                        .toType(DataType.FLOAT32, false).mean();
+                NDArray quantileLoss =
+                        Loss.quantileL1Loss(quantile)
+                                .evaluate(new NDList(gtTarget), new NDList(forecastQuantile));
+                NDArray quantileCoverage =
+                        gtTarget.lt(forecastQuantile).toType(DataType.FLOAT32, false).mean();
                 retMetrics.put(
                         String.format("QuantileLoss[%.2f]", quantile), quantileLoss.getFloat());
                 retMetrics.put(
