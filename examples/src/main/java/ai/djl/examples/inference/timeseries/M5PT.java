@@ -23,6 +23,7 @@ import ai.djl.ndarray.NDArray;
 import ai.djl.ndarray.NDArrays;
 import ai.djl.ndarray.NDList;
 import ai.djl.ndarray.NDManager;
+import ai.djl.ndarray.types.DataType;
 import ai.djl.ndarray.types.Shape;
 import ai.djl.repository.Artifact;
 import ai.djl.repository.MRL;
@@ -34,8 +35,8 @@ import ai.djl.timeseries.SampleForecast;
 import ai.djl.timeseries.TimeSeriesData;
 import ai.djl.timeseries.dataset.FieldName;
 import ai.djl.timeseries.translator.DeepARTranslator;
+import ai.djl.training.loss.Loss;
 import ai.djl.training.util.ProgressBar;
-import ai.djl.translate.DeferredTranslatorFactory;
 import ai.djl.translate.TranslateException;
 import ai.djl.util.Progress;
 
@@ -62,7 +63,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class M5PT {
@@ -84,12 +84,12 @@ public final class M5PT {
 
         // To use local dataset, users can load data as follows
         // Repository repository = Repository.newInstance("local_dataset",
-        // Paths.get("rootPath/m5-forecasting-accuracy"));
+        // Paths.get("YOUR_Path/m5-forecasting-accuracy"));
         // Then add the setting `.optRepository(repository)` to the builder below
         M5Dataset dataset = M5Dataset.builder().setManager(manager).build();
 
         // The modelUrl can be replaced by local model path. E.g.,
-        // String modelUrl = "rootPath/deepar.zip";
+        // String modelUrl = "YOUR_Path/deepar.zip";
         Path modelPath = Paths.get("./src/main/resources/deepar.pt");
         int predictionLength = 4;
 
@@ -132,6 +132,7 @@ public final class M5PT {
                 // aggregating/coarse graining the data. See https://github.com/Carkham/m5_blog
                 evaluator.aggregateMetrics(evaluator.getMetricsPerTs(gt, pastTarget, forecast));
                 progress.increment(1);
+                System.out.println(forecast.mean());
 
                 // save data for plotting. Please see the corresponding python script from
                 // https://gist.github.com/Carkham/a5162c9298bc51fec648a458a3437008
@@ -327,15 +328,11 @@ public final class M5PT {
 
             for (float quantile : quantiles) {
                 NDArray forecastQuantile = forecast.quantile(quantile);
-
                 NDArray quantileLoss =
-                        forecastQuantile
-                                .sub(gtTarget)
-                                .mul(gtTarget.lte(forecastQuantile).sub(quantile))
-                                .abs()
-                                .sum()
-                                .mul(2);
-                NDArray quantileCoverage = gtTarget.lt(forecastQuantile).mean();
+                        Loss.quantileL1Loss(quantile)
+                                .evaluate(new NDList(gtTarget), new NDList(forecastQuantile));
+                NDArray quantileCoverage =
+                        gtTarget.lt(forecastQuantile).toType(DataType.FLOAT32, false).mean();
                 retMetrics.put(
                         String.format("QuantileLoss[%.2f]", quantile), quantileLoss.getFloat());
                 retMetrics.put(
