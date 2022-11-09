@@ -84,12 +84,12 @@ public final class M5PT {
 
         // To use local dataset, users can load data as follows
         // Repository repository = Repository.newInstance("local_dataset",
-        // Paths.get("rootPath/m5-forecasting-accuracy"));
+        // Paths.get("YOUR_Path/m5-forecasting-accuracy"));
         // Then add the setting `.optRepository(repository)` to the builder below
         M5Dataset dataset = M5Dataset.builder().setManager(manager).build();
 
         // The modelUrl can be replaced by local model path. E.g.,
-        // String modelUrl = "rootPath/deepar.zip";
+        // String modelUrl = "YOUR_Path/deepar.zip";
         Path modelPath = Paths.get("./src/main/resources/deepar.pt");
         int predictionLength = 4;
 
@@ -132,6 +132,7 @@ public final class M5PT {
                 // aggregating/coarse graining the data. See https://github.com/Carkham/m5_blog
                 evaluator.aggregateMetrics(evaluator.getMetricsPerTs(gt, pastTarget, forecast));
                 progress.increment(1);
+                System.out.println(forecast.mean());
 
                 // save data for plotting. Please see the corresponding python script from
                 // https://gist.github.com/Carkham/a5162c9298bc51fec648a458a3437008
