@@ -6,7 +6,8 @@ Junyuan Zhang, Kexin Feng
 
 Time series data are commonly seen in the world. They can contain valued information that helps forecast for the future, monitor the status of a procedure and feedforward a control. Generic applications includes the following: sales forecasting, stock market analysis, yield projections, process and quality control, and many many more. See [link1](https://www.itl.nist.gov/div898/handbook/pmc/section4/pmc41.htm) and [link2](https://www.influxdata.com/time-series-forecasting-methods/#:~:text=Time%20series%20forecasting%20means%20to,on%20what%20has%20already%20happened) for further examples of timeseries data. 
 
-In this blog, we will introduce the timeseries package of DJL. This package contains the following two major features. 
+The timeseries package introduced here belongs to a deep learning framework, DeepJavaLibrary [DJL](https://github.com/deepjavalibrary/djl). It is designed for Java developers and is compatible with the existing popular deep learning engines, like PyTorch, MXNet, and Tensorflow, and enables users to easily train and deploy deep learning models in their Java application.
+The package contains the following two major features. 
 1. It integrates DJL with [gluonTS](https://ts.gluon.ai/stable/index.html), a powerful timeseries python package. With this feature, the pretrained models in gluonTS, either with MXNet or PyTorch, can both be directly loaded into DJL for inference and deployment in Java environment. Also take a look at the python example [m5_gluonts_template](https://github.com/awslabs/gluonts/blob/dev/examples/m5_gluonts_template.ipynb). Our convention of the parameter names are the same as theirs.
 2. It contains training features, so that users can directly build and modify timeseries deep learning models in DJL within Java envinronment. 
 
