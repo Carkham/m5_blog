@@ -7,7 +7,7 @@ Junyuan Zhang, Kexin Feng
 Time series data are commonly seen in the world. They can contain valued information that helps forecast for the future, monitor the status of a procedure and feedforward a control. Generic applications includes the following: sales forecasting, stock market analysis, yield projections, process and quality control, and many many more. See [link1](https://www.itl.nist.gov/div898/handbook/pmc/section4/pmc41.htm) and [link2](https://www.influxdata.com/time-series-forecasting-methods/#:~:text=Time%20series%20forecasting%20means%20to,on%20what%20has%20already%20happened) for further examples of timeseries data. 
 
 In this blog, we will introduce the timeseries package of DJL. This package contains the following two major features. 
-1. It integrates DJL with [gluonTS](https://ts.gluon.ai/stable/index.html), a powerful timeseries python package. With this feature, the pretrained models in gluonTS, either with mxnet or with pytorch, can be directly loaded into DJL for inference and deployment in Java environment. Also take a look at the python example [m5_gluonts_template](https://github.com/awslabs/gluonts/blob/dev/examples/m5_gluonts_template.ipynb). Our convention of the parameter names are the same as theirs.
+1. It integrates DJL with [gluonTS](https://ts.gluon.ai/stable/index.html), a powerful timeseries python package. With this feature, the pretrained models in gluonTS, either with MXNet or PyTorch, can both be directly loaded into DJL for inference and deployment in Java environment. Also take a look at the python example [m5_gluonts_template](https://github.com/awslabs/gluonts/blob/dev/examples/m5_gluonts_template.ipynb). Our convention of the parameter names are the same as theirs.
 2. It contains training features, so that users can directly build and modify timeseries deep learning models in DJL within Java envinronment. 
 
 In the following, we will demonstrate these features with [M5 Forecasting](https://www.kaggle.com/c/m5-forecasting-accuracy) data. We will also use the [airpassenger](https://ts.gluon.ai/stable/index.html) data to benchmark the pretrained model loaded from gluonTS. The blog is structured as follows. 
@@ -107,7 +107,7 @@ Also note that, for a model exported from MXNel, the tensor shape of the `begin_
 
 Now, you are ready to use the model bundled with the translator created above to run inference.
 
-Since we need to generate features based on dates and make predictions with reference to the context, for each `TimeSeriesData` you must set the values of its `**StartTime**` and `**TARGET**` fields.
+Since we need to generate features based on dates and make predictions with reference to the context, for each `TimeSeriesData` you must set the values of its `StartTime` and `TARGET` fields.
 
 ```java
 try (ZooModel<TimeSeriesData, Forecast> model = criteria.loadModel();
@@ -180,7 +180,7 @@ Here, we focus on the metric *Root Mean Squared Scaled Error*, ie. [RMSSE](https
 As you can see, in the result metric above, the model has `RMSSE = 1.00`. This means that, on average, the error 
 between the prediction and the actual data is around `1.00` time the average variation of the timeseries. This is also 
 seen in the 
-result graph above: the prediction intervals are about the same scale as how much the data varies through time. This shows that the model is working; the deepAR model running in python also has the similar metric of RMSSE = 1.00. Other kaggle [learderboard models](https://www.kaggle.com/competitions/m5-forecasting-accuracy/leaderboard) can reach RMSSE = 0.5.
+result graph above: the prediction intervals are about the same scale as how much the data varies through time. This shows that the model is working; the deepAR model running in python also has the similar metric of `RMSSE = 1.00`. Other kaggle [learderboard models](https://www.kaggle.com/competitions/m5-forecasting-accuracy/leaderboard) can reach `RMSSE = 0.5`.
 
 Click [here](https://github.com/deepjavalibrary/djl/blob/master/examples/src/main/java/ai/djl/examples/inference/timeseries/M5ForecastingDeepAR.java) to see the **source code** of the inference feature.
 
