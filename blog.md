@@ -4,25 +4,27 @@ Junyuan Zhang, Kexin Feng
 
 <img src="https://cdn-images-1.medium.com/max/1000/1*vfVcF-ZaC_WbTt_LWlXH0w.png" width="600" />
 
-Time series data are commonly seen in the world. They can contain valued information that helps forecast for the future, monitor the status of a procedure and feedforward a control. Generic applications includes the following: sales forecasting, stock market analysis, yield projections, process and quality control, and many many more. See [link1](https://www.itl.nist.gov/div898/handbook/pmc/section4/pmc41.htm) and [link2](https://www.influxdata.com/time-series-forecasting-methods/#:~:text=Time%20series%20forecasting%20means%20to,on%20what%20has%20already%20happened).
+Time series data are commonly seen in the world. They can contain valued information that helps forecast for the future, monitor the status of a procedure and feedforward a control. Generic applications includes the following: sales forecasting, stock market analysis, yield projections, process and quality control, and many many more. See [link1](https://www.itl.nist.gov/div898/handbook/pmc/section4/pmc41.htm) and [link2](https://www.influxdata.com/time-series-forecasting-methods/#:~:text=Time%20series%20forecasting%20means%20to,on%20what%20has%20already%20happened) for further examples of timeseries data. 
 
-In this blog, we will introduce the timeseries package of DJL. This package contains the following two major features. First, it integrates DJL with [gluonTS](https://ts.gluon.ai/stable/index.html), a powerful timeseries python package. With this feature, the  models pretrained in gluonTS can be directly loaded into DJL for inference and deployment in Java environment.
-Second, it contains training features, so that users can directly build and modify timeseries deep learning models in DJL within Java envinronment. In the following, we will demonstrate these features with [M5 Forecasting](https://www.kaggle.com/c/m5-forecasting-accuracy) data. We will also use the [airpassenger](https://ts.gluon.ai/stable/index.html) data to benchmark the pretrained model loaded from gluonTS.
+The timeseries package introduced here belongs to a deep learning framework, DeepJavaLibrary [DJL](https://github.com/deepjavalibrary/djl). It is designed for Java developers and is compatible with the existing popular deep learning engines, like PyTorch, MXNet, and Tensorflow, and enables users to easily train and deploy deep learning models in their Java application.
+The package contains the following two major features. 
+1. It integrates DJL with [gluonTS](https://ts.gluon.ai/stable/index.html), a powerful timeseries python package. With this feature, the pretrained models in gluonTS, either with MXNet or PyTorch, can both be directly loaded into DJL for inference and deployment in Java environment. Also take a look at the python example [m5_gluonts_template](https://github.com/awslabs/gluonts/blob/dev/examples/m5_gluonts_template.ipynb). Our convention of the parameter names are the same as theirs.
+2. It contains training features, so that users can directly build and modify timeseries deep learning models in DJL within Java envinronment. 
 
-The blog is structured as follows. 
-- M5 Forecasting dataset and task
-- DeepAR model
-- Inference feature: inference with pretrained DeepAR model. 
-- Training feature: build and train your own DeepAR model
-- Summary
+In the following, we will demonstrate these features with [M5 Forecasting](https://www.kaggle.com/c/m5-forecasting-accuracy) data. We will also use the [airpassenger](https://ts.gluon.ai/stable/index.html) data to benchmark the pretrained model loaded from gluonTS. The blog is structured as follows. 
+1. M5 Forecasting dataset and task
+2. DeepAR model
+3. Inference feature: inference with pretrained DeepAR model. 
+4. Training feature: build and train your own DeepAR model
+5. Summary
 
-## M5 Forecasting dataset and task
+## M5 Forecasting dataset and the task description
 
-This demonstration is based on the [Kaggle M5 Forecasting competition](https://www.kaggle.com/competitions/m5-forecasting-accuracy/overview). See also [link](https://mofc.unic.ac.cy/m5-competition/). The dataset contains **42,840 hierarchical time-series data** of the unit sales of Walmart retail goods.  “Hierarchical” here means that we can aggregate the data from different perspectives, including item level, department level, product category level, and state level. Also for each item, we can access information about its price, promotions, and holidays. As well as sales data from Jan 2011 all the way to June 2016.
+This demonstration is based on the [Kaggle M5 Forecasting competition](https://www.kaggle.com/competitions/m5-forecasting-accuracy/overview). The dataset contains **42,840 hierarchical time-series data** of the unit sales of Walmart retail goods.  “Hierarchical” here means that we can aggregate the data from different perspectives, including item level, department level, product category level, and state level. Also for each item, we can access information about its price, promotions, and holidays. As well as sales data from Jan 2011 all the way to June 2016.
 
 Our goal is to forecast future sales. To meaure the performance of the forecasting, we are tasked to estimate the accuracy of our predictions with the metric: Root Mean Squared Scaled Error (RMSSE). This is designed to be scale invariant and symmetric, suitable for timeseries data. This will be introduced later.
 
-**Note**: in the original M5 forecasting data,  the time series data is very sparse containing many zero values. These zero can be seen as *inactive data*. So
+**Note**. In the original M5 forecasting data,  the time series data is very sparse containing many zero values. These zero can be seen as *inactive data*. So
 we **aggregate the sales by week** to train and predict at a coarser granularity, which focues on only the *active data*. To also predict for the inactive data, another model may be needed to be combined. The data aggration is done with a python script [**m5_data_coarse_grain.py**](https://gist.github.com/Carkham/a5162c9298bc51fec648a458a3437008). This script will create `weekly_xxx.csv` files representing weekly data in the dataset directory you specify.
 
 ## DeepAR model
@@ -75,9 +77,7 @@ M5Dataset dataset = M5Dataset.builder().setManager(manager).optRepository(reposi
 
 The inference workflow consists of input pre-processing, model forward, and output post-processing. DJL encapsulates input and output processing into the translator, and uses `Predictor` to do the model forward.
 
-`DeepARTranslator` provides support for data preprocessing and postprocessing for probabilistic prediction models. Similar to GluonTS, this translator is specifically designed for the `timeseriesData`, which fetches the data according to different parameters, like frequency. So you must configure this translator first as shown below.
-
-**Note**: Here the arguments `predictionLength` and `freq` decide the structure of the model. So for a specific model, these two arguments cannot be changed, such that the translator is able to be compatible with the models in terms of the tensor shapes.
+`DeepARTranslator` provides support for data preprocessing and postprocessing for probabilistic prediction models. Similar to GluonTS, this translator is specifically designed for the `timeseriesData`, which fetches the data according to different parameters, like frequency, which are configured as shown below. For any other GluonTS model, you can quickly develop your own translator using the classes in `transform` modules (etc. `TransformerTranslator`).
 
 Here, the `Criteria` API is used as search criteria to look for a ZooModel. In this application, you can customize your local pretrained model path: `/YOUR PATH/deepar.zip` .
 
@@ -88,7 +88,7 @@ Criteria<TimeSeriesData, Forecast> criteria =
         Criteria.builder()
                 .setTypes(TimeSeriesData.class, Forecast.class)
                 .optModelUrls(modelUrl)
-                .optEngine("MXNet")
+                .optEngine("MXNet") // or PyTorch
                 .optTranslatorFactory(new DeferredTranslatorFactory())
                 .optArgument("prediction_length", predictionLength)
                 .optArgument("freq", "W")
@@ -99,14 +99,16 @@ Criteria<TimeSeriesData, Forecast> criteria =
                 .build();
 ```
 
-For any other GluonTS model, you can quickly develop your own translator using the classes in `transform` modules (etc. `TransformerTranslator`).
+**Note**: Here the arguments `predictionLength` and `freq` decide the structure of the model. So for a specific model, these two arguments cannot be changed, such that the translator is compatible with the models in terms of the tensor shapes. 
+
+Also note that, for a model exported from MXNel, the tensor shape of the `begin_state` may be problematic, as indicated in this [issue](https://github.com/deepjavalibrary/djl/issues/2106#issuecomment-1295703321). As described there, you need to "change every begin_state's shape to (-1, 40)". Otherwise the model would not allow batch data processing.
 
 
 ### Prediction
 
 Now, you are ready to use the model bundled with the translator created above to run inference.
 
-Since we need to generate features based on dates and make predictions with reference to the context, for each `TimeSeriesData` you must set the values of its `**StartTime**` and `**TARGET**` fields.
+Since we need to generate features based on dates and make predictions with reference to the context, for each `TimeSeriesData` you must set the values of its `StartTime` and `TARGET` fields.
 
 ```java
 try (ZooModel<TimeSeriesData, Forecast> model = criteria.loadModel();
@@ -179,7 +181,7 @@ Here, we focus on the metric *Root Mean Squared Scaled Error*, ie. [RMSSE](https
 As you can see, in the result metric above, the model has `RMSSE = 1.00`. This means that, on average, the error 
 between the prediction and the actual data is around `1.00` time the average variation of the timeseries. This is also 
 seen in the 
-result graph above: the prediction intervals are about the same scale as how much the data varies through time. This shows that the model is working; the deepAR model running in python also has the similar metric of RMSSE = 1.00. Other kaggle [learderboard models](https://www.kaggle.com/competitions/m5-forecasting-accuracy/leaderboard) can reach RMSSE = 0.5.
+result graph above: the prediction intervals are about the same scale as how much the data varies through time. This shows that the model is working; the deepAR model running in python also has the similar metric of `RMSSE = 1.00`. Other kaggle [learderboard models](https://www.kaggle.com/competitions/m5-forecasting-accuracy/leaderboard) can reach `RMSSE = 0.5`.
 
 Click [here](https://github.com/deepjavalibrary/djl/blob/master/examples/src/main/java/ai/djl/examples/inference/timeseries/M5ForecastingDeepAR.java) to see the **source code** of the inference feature.
 
@@ -260,7 +262,7 @@ M5Forecast getDataset(
         builder.addFeature("w_" + i, FieldName.TARGET);
     }
 
-    // this is the static category feature
+    // This is the static category feature
     M5Forecast m5Forecast =
         builder.addFeature("state_id", FieldName.FEAT_STATIC_CAT)
         .addFeature("store_id", FieldName.FEAT_STATIC_CAT)
