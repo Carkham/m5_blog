@@ -6,7 +6,7 @@ Junyuan Zhang, Kexin Feng
 
 Time series data are commonly seen in the world. They can contain valued information that helps forecast for the future, monitor the status of a procedure and feedforward a control. Generic applications includes the following: sales forecasting, stock market analysis, yield projections, process and quality control, and many many more. See [link1](https://www.itl.nist.gov/div898/handbook/pmc/section4/pmc41.htm) and [link2](https://www.influxdata.com/time-series-forecasting-methods/#:~:text=Time%20series%20forecasting%20means%20to,on%20what%20has%20already%20happened) for further examples of timeseries data. 
 
-The timeseries package introduced here belongs to a deep learning framework, DeepJavaLibrary [DJL](https://github.com/deepjavalibrary/djl). It is designed for Java developers and is compatible with the existing popular deep learning engines, like PyTorch, MXNet, and Tensorflow, and enables users to easily train and deploy deep learning models in their Java application.
+The timeseries package introduced here belongs to a deep learning framework, DeepJavaLibrary [DJL](https://github.com/deepjavalibrary/djl). It is designed for Java developers and is compatible with the existing popular deep learning engines, like PyTorch, MXNet, and Tensorflow. This library enables users to easily train and deploy deep learning models in their Java application.
 The package contains the following two major features. 
 1. It integrates DJL with [gluonTS](https://ts.gluon.ai/stable/index.html), a powerful timeseries python package. With this feature, the pretrained models in gluonTS, either with MXNet or PyTorch, can both be directly loaded into DJL for inference and deployment in Java environment. Also take a look at the python example [m5_gluonts_template](https://github.com/awslabs/gluonts/blob/dev/examples/m5_gluonts_template.ipynb). Our convention of the parameter names are the same as theirs.
 2. It contains training features, so that users can directly build and modify timeseries deep learning models in DJL within Java envinronment. 
@@ -64,8 +64,7 @@ In order to realize the preprocessing of time series data, we define the `TimeSe
 
 So for your own dataset, you need to customize the way you get the data and put it into `TimeSeriesData` as the input to the translator. In this demo, we use `M5Dataset` which is located in `M5ForecastingDeepAR.java`. 
 
-### Set your own dataset path.
-
+The dataset path is set in the follwing code.
 ```java
 Repository repository = Repository.newInstance("local_dataset",
     Paths.get("YOUR_PATH/m5-forecasting-accuracy"));
@@ -181,7 +180,7 @@ Here, we focus on the metric *Root Mean Squared Scaled Error*, ie. [RMSSE](https
 As you can see, in the result metric above, the model has `RMSSE = 1.00`. This means that, on average, the error 
 between the prediction and the actual data is around `1.00` time the average variation of the timeseries. This is also 
 seen in the 
-result graph above: the prediction intervals are about the same scale as how much the data varies through time. This shows that the model is working; the deepAR model running in python also has the similar metric of `RMSSE = 1.00`. Other kaggle [learderboard models](https://www.kaggle.com/competitions/m5-forecasting-accuracy/leaderboard) can reach `RMSSE = 0.5`.
+result graph above: the predicted intervals are about the same as the data variation over time. If the predicted interval were smaller, then the prediction would be more accurate, like the plot with the airpassenger data in the second next section. In the Kaggle contest [learderboard](https://www.kaggle.com/competitions/m5-forecasting-accuracy/leaderboard), the best model can reach `RSSSM=0.5`.  
 
 Click [here](https://github.com/deepjavalibrary/djl/blob/master/examples/src/main/java/ai/djl/examples/inference/timeseries/M5ForecastingDeepAR.java) to see the **source code** of the inference feature.
 
