@@ -15,7 +15,7 @@ This DeepAR model is easily accessible in the timeseries package in DeepJavaLibr
 
 In this blogpost, we will focus on the inference feature. It is structured as follows.
 1. A simple demonstration with airpassenger data
-1. M5 Forecasting dataset and task
+1. M5 Forecasting dataset
 1. DeepAR model
 1. Inference with pretrained DeepAR model. 
 1. Summary
@@ -42,11 +42,9 @@ The result is shown in the graph below. It has the same performance as shown in 
 
 
 
-## M5 Forecasting dataset and the task description
+## M5 Forecasting dataset
 
 This demonstration is based on the [Kaggle M5 Forecasting competition](https://www.kaggle.com/competitions/m5-forecasting-accuracy/overview). The dataset contains **42,840 hierarchical time-series data** of the unit sales of Walmart retail goods.  “Hierarchical” here means that we can aggregate the data from different perspectives, including item level, department level, product category level, and state level. Also for each item, we can access information about its price, promotions, and holidays. As well as sales data from Jan 2011 all the way to June 2016.
-
-Our goal is to forecast future sales. To meaure the performance of the forecasting, we are tasked to estimate the accuracy of our predictions with the metric: Root Mean Squared Scaled Error (RMSSE). This is designed to be scale invariant and symmetric, suitable for timeseries data. This will be introduced later.
 
 **Note**. In the original M5 forecasting data,  the time series data is very sparse containing many zero values. These zero can be seen as *inactive data*. So
 we **aggregate the sales by week** to train and predict at a coarser granularity, which focues on only the *active data*. To also predict for the inactive data, another model may be needed to be combined. The data aggration is done with a python script [**m5_data_coarse_grain.py**](https://gist.github.com/Carkham/a5162c9298bc51fec648a458a3437008). This script will create `weekly_xxx.csv` files representing weekly data in the dataset directory you specify.
@@ -72,7 +70,7 @@ repositories {
 }
 dependencies {
   implementation "org.apache.logging.log4j:log4j-slf4j-impl:2.17.1"
-  implementation platform("ai.djl:bom:0.16.0")
+  implementation platform("ai.djl:bom:0.20.0")
   implementation "ai.djl:api"
   implementation "ai.djl.timeseries"
   runtimeOnly "ai.djl.mxnet:mxnet-engine"
@@ -122,7 +120,7 @@ Criteria<TimeSeriesData, Forecast> criteria =
 
 **Note**: Here the arguments `predictionLength` and `freq` decide the structure of the model. So for a specific model, these two arguments cannot be changed, such that the translator is compatible with the models in terms of the tensor shapes. 
 
-Also note that, for a model exported from MXNel, the tensor shape of the `begin_state` may be problematic, as indicated in this [issue](https://github.com/deepjavalibrary/djl/issues/2106#issuecomment-1295703321). As described there, you need to "change every begin_state's shape to (-1, 40)". Otherwise the model would not allow batch data processing.
+Also note that, for a model exported from MXNet, the tensor shape of the `begin_state` may be problematic, as indicated in this [issue](https://github.com/deepjavalibrary/djl/issues/2106#issuecomment-1295703321). As described there, you need to "change every begin_state's shape to (-1, 40)". Otherwise the model would not allow batch data processing.
 
 
 ### Prediction
@@ -176,7 +174,6 @@ We visualize the forecast result with mean, prediction intervals, etc. The plot 
 <img src="https://cdn-images-1.medium.com/max/1000/1*S9FRh3BRpymqeqA3ndV_MA.png" width="800" />
 
 ### Metrics
-
 We use the following metrics to evaluate the performance of the DeepAR model in the M5 Forecasting competition.
 
 ```
@@ -197,7 +194,7 @@ We use the following metrics to evaluate the performance of the DeepAR model in 
 > [INFO ] - metric: MSE:   70.64
 ```
 
-Here, we focus on the metric *Root Mean Squared Scaled Error*, ie. [RMSSE](https://www.kaggle.com/competitions/m5-forecasting-accuracy/overview/evaluation). The detailed formula is in [here](https://mofc.unic.ac.cy/wp-content/uploads/2020/03/). It is different from the Root-mean-square error [RMSE](https://en.wikipedia.org/wiki/Root-mean-square_deviation) in that RMSSE is based on the variation between two contiguous data points. So this metric is scale invariant.
+Here, we focus on the metric *Root Mean Squared Scaled Error*, ie. [RMSSE](https://www.kaggle.com/competitions/m5-forecasting-accuracy/overview/evaluation). The detailed formula is in [here](https://mofc.unic.ac.cy/wp-content/uploads/2020/03/). It is different from the Root-mean-square error [RMSE](https://en.wikipedia.org/wiki/Root-mean-square_deviation) in that RMSSE is based on the variation between two contiguous data points. So this metric is scale invariant, suitable for timeseries data.
 
 As you can see, in the result metric above, the model has `RMSSE = 1.00`. This means that, on average, the error 
 between the prediction and the actual data is around `1.00` time the average variation of the timeseries. This is also 
